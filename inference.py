@@ -312,6 +312,26 @@ class ExactInference(InferenceModule):
         current position is known.
         """
         "*** YOUR CODE HERE ***"
+        beliefsCopy = self.beliefs.copy()
+        for pos in self.allPositions:
+
+            # If the current position is the jail position, the old position
+            # could be anywhere, otherwise it is adjacent
+            if pos == self.getJailPosition():
+                oldPositions = self.allPositions
+            else:
+                actionVectors = [(1,0),(-1,0),(0,1),(0,-1),(0,0)]
+                nwse = [(pos[0] + a[0], pos[1] + a[1]) for a in actionVectors]
+                oldPositions = [p for p in nwse if p in self.allPositions]
+
+            currentSum = 0
+            for oldPos in oldPositions:
+                newPosDist = self.getPositionDistribution(gameState, oldPos)
+                if pos in newPosDist:
+                    currentSum += beliefsCopy[oldPos] * newPosDist[pos]
+            self.beliefs[pos] = currentSum
+
+        self.beliefs.normalize()
 
     def getBeliefDistribution(self):
         return self.beliefs
