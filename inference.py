@@ -398,6 +398,29 @@ class ParticleFilter(InferenceModule):
         gameState.
         """
         "*** YOUR CODE HERE ***"
+        weights = self.getBeliefDistribution()
+        weightsCopy = weights.copy()
+        for pos in weightsCopy:
+
+            # If the current position is the jail position, the old position
+            # could be anywhere, otherwise it is adjacent
+            if pos == self.getJailPosition():
+                oldPositions = self.allPositions
+            else:
+                actionVectors = [(1,0),(-1,0),(0,1),(0,-1),(0,0)]
+                nwse = [(pos[0] + a[0], pos[1] + a[1]) for a in actionVectors]
+                oldPositions = [p for p in nwse if p in self.allPositions]
+
+            currentSum = 0
+            for oldPos in oldPositions:
+                newPosDist = self.getPositionDistribution(gameState, oldPos)
+                if pos in newPosDist:
+                    currentSum += weightsCopy[oldPos] * newPosDist[pos]
+            weights[pos] = currentSum
+
+        weights.normalize()
+
+        self.particles = [weights.sample() for i in range(self.numParticles)]
 
     def getBeliefDistribution(self):
         """
@@ -439,6 +462,19 @@ class JointParticleFilter(ParticleFilter):
         """
         self.particles = []
         "*** YOUR CODE HERE ***"
+        positions1 = list(self.legalPositions)
+        positions2 = list(self.legalPositions)
+        random.shuffle(positions1)
+        random.shuffle(positions2)
+        posIndex = 0
+        while len(self.particles) < self.numParticles:
+            if posIndex >= len(positions1):
+                random.shuffle(positions1)
+                random.shuffle(positions2)
+                posIndex = 0
+            self.particles.append((positions1[posIndex],
+                                   positions2[posIndex]))
+            posIndex += 1
 
     def addGhostAgent(self, agent):
         """
