@@ -507,6 +507,31 @@ class JointParticleFilter(ParticleFilter):
         the DiscreteDistribution may be useful.
         """
         "*** YOUR CODE HERE ***"
+        weights = self.getBeliefDistribution()
+        allPositions = self.legalPositions + \
+                       [self.getJailPosition(i) for i in range(self.numGhosts)]
+
+        for pos1 in allPositions:
+            for pos2 in allPositions:
+                currentSum = 0
+                for i in range(self.numGhosts):
+                    prob1 = self.getObservationProb(observation[i],
+                                gameState.getPacmanPosition(),
+                                pos1,
+                                self.getJailPosition(i))
+                    prob2 = self.getObservationProb(observation[i],
+                                gameState.getPacmanPosition(),
+                                pos2,
+                                self.getJailPosition(i))
+                    currentSum += prob1 * prob2
+                weights[(pos1, pos2)] *= currentSum
+
+        weights.normalize()
+
+        if weights.total() == 0:
+            self.initializeUniformly(gameState)
+        else:
+            self.particles = [weights.sample() for i in range(self.numParticles)]
 
     def elapseTime(self, gameState):
         """
@@ -523,6 +548,22 @@ class JointParticleFilter(ParticleFilter):
             """*** END YOUR CODE HERE ***"""
             newParticles.append(tuple(newParticle))
         self.particles = newParticles
+
+    def getBeliefDistribution(self):
+        """
+        Return the agent's current belief state, a distribution over ghost
+        locations conditioned on all evidence and time passage. This method
+        essentially converts a list of particles into a belief distribution.
+        """
+        "*** YOUR CODE HERE ***"
+        dist = DiscreteDistribution()
+        for pos1 in self.legalPositions:
+            for pos2 in self.legalPositions:
+                dist[(pos1, pos2)]
+        for particle in self.particles:
+            dist[particle] += 1
+        dist.normalize()
+        return dist
 
 
 # One JointInference module is shared globally across instances of MarginalInference
